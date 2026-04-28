@@ -1,0 +1,46 @@
+{
+  "name": "todo-electron",
+  "version": "1.0.0",
+  "description": "Todo 应用桌面版",
+  "main": "main.js",
+  "scripts": {
+    "build": "electron-builder build",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "cors": "^2.8.6",
+    "sqlite3": "^6.0.1",
+    "sqlite": "^5.1.1"
+  },
+  "devDependencies": {
+    "electron": "^33.3.0",
+    "electron-builder": "^25.1.0"
+  },
+  "build": {
+    "appId": "com.todo.app",
+    "productName": "Todo应用",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      {
+        "from": "../todo-server/dist",
+        "to": "todo-server/dist",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "../react-demo/dist",
+        "to": "react-demo/dist",
+        "filter": ["**/*"]
+      }
+    ],
+    "win": {
+      "target": "portable",
+      "signAndEditExecutable": false,
+      "artifactName": "Todo应用-${version}.${ext}"
+    },
+    "asar": false
+  }
+}

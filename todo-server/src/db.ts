@@ -4,7 +4,7 @@ import path from "path"
 
 // 打开数据库连接（如果文件不存在会自动创建）
 const dbPromise = open({
-  filename: path.join(__dirname, "database.sqlite"), // 数据库文件存放路径
+  filename: process.env.DB_PATH || path.join(__dirname, "database.sqlite"), // 数据库文件存放路径
   driver: sqlite3.Database
 })
 
@@ -23,3 +23,6 @@ async function initDB() {
 initDB()
 
 export default dbPromise
+
+
+
