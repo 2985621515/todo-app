@@ -1,38 +1,39 @@
 import express from "express"
-import pool from "../db"
+import dbPromise from "../db"
 
 const router = express.Router()
 
 // 获取列表
 router.get("/", async (req, res) => {
-  const [rows] = await pool.query("select * from todos")//只接受第一个参数，即返回的结果集，忽略第二个fields参数
-  res.json(rows)//作用：将查询结果转换为 JSON 格式并发送给客户端
+  const db = await dbPromise
+  const rows = await db.all("SELECT * FROM todos")
+  res.json(rows)
 })
 
 // 添加
 router.post("/", async (req, res) => {
-  // 从请求体中提取 text 字段
   const { text } = req.body
-
-  // SQL 语句：将 text 字段插入 todos 表中
-  const [result]: any = await pool.query(
-    "insert into todos (text) values (?)",
+  const db = await dbPromise
+  
+  const result = await db.run(
+    "INSERT INTO todos (text) VALUES (?)",
     [text]
   )
-
-  // 返回添加的 todo 信息
+  
+  // SQLite 中获取最后插入的ID：result.lastID
   res.json({
-    id: result.insertId,
-    text
+    id: result.lastID,
+    text,
+    done: 0
   })
 })
 
 // 删除
 router.delete("/:id", async (req, res) => {
   const { id } = req.params
-
-  await pool.query("delete from todos where id = ?", [id])
-
+  const db = await dbPromise
+  
+  await db.run("DELETE FROM todos WHERE id = ?", [id])
   res.json({ success: true })
 })
 
@@ -40,30 +41,30 @@ router.delete("/:id", async (req, res) => {
 router.put("/:id", async (req, res) => {
   const { id } = req.params
   const { text } = req.body
-
-  await pool.query("update todos set text = ? where id = ?", [
-    text,
-    id
-  ])
-
+  const db = await dbPromise
+  
+  await db.run("UPDATE todos SET text = ? WHERE id = ?", [text, id])
   res.json({ success: true })
 })
 
 // 切换状态
 router.patch("/:id", async (req, res) => {
   const { id } = req.params
-
-  await pool.query(
-    "update todos set done = not done where id = ?",
+  const db = await dbPromise
+  
+  // SQLite 使用 CASE WHEN 来切换 0/1
+  await db.run(
+    "UPDATE todos SET done = CASE WHEN done = 0 THEN 1 ELSE 0 END WHERE id = ?",
     [id]
   )
-
   res.json({ success: true })
 })
 
 // 清空
 router.delete("/", async (req, res) => {
-  await pool.query("delete from todos")
+  const db = await dbPromise
+  
+  await db.run("DELETE FROM todos")
   res.json({ success: true })
 })
 
