@@ -36,3 +36,6 @@ react-demo/dist/
 
 # 后端特定
 todo-server/dist/
+
+# 数据库文件（构建产物，非源码）
+**/database.sqlite
