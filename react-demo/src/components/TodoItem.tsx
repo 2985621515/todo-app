@@ -48,6 +48,30 @@ function TodoItem({ todo }: Props) {
   return (
     <>
       <List.Item
+        style={{
+          borderRadius: 8,
+          transition: "background 0.2s, box-shadow 0.2s",
+          cursor: "default",
+          borderLeft: `4px solid ${
+            todo.done
+              ? "#d9d9d9"
+              : todo.priority === "high"
+              ? "#E53E3E"
+              : todo.priority === "medium"
+              ? "#F59E0B"
+              : "#10b92c"
+          }`,
+          marginBottom: 4,
+          background: todo.done ? "#fafafa" : "transparent",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = "#fafafa"
+          e.currentTarget.style.boxShadow = "0 1px 2px rgba(0,0,0,0.04)"
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = todo.done ? "#fafafa" : "transparent"
+          e.currentTarget.style.boxShadow = "none"
+        }}
         actions={[
           <Button type="link" onClick={handleEdit}>
             编辑
