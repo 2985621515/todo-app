@@ -34,7 +34,8 @@ function createWindow() {
     height: 800,
     minWidth: 800,
     minHeight: 600,
-    title: 'Todo 应用',
+    title: 'G-Todo',
+    icon: path.join(__dirname, 'Todo.ico'), 
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true

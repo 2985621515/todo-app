@@ -19,11 +19,12 @@
   },
   "build": {
     "appId": "com.todo.app",
-    "productName": "Todo应用",
+    "productName": "G-Todo",
     "directories": {
       "output": "dist"
     },
-    "files": [
+    "icon": "Todo.ico",
+       "files": [
       "main.js",
       {
         "from": "../todo-server/dist",
@@ -39,7 +40,7 @@
     "win": {
       "target": "portable",
       "signAndEditExecutable": false,
-      "artifactName": "Todo应用-${version}.${ext}"
+      "artifactName": "${productName}.${ext}"
     },
     "asar": false
   }

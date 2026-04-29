@@ -22,4 +22,4 @@ npm install
 npx electron-builder build
 ```
 
-打包完成后，`electron/dist/` 目录下会生成 `Todo应用-1.0.0.exe`。
+打包完成后，`electron/dist/` 目录下会生成 `G-Todo.exe`。
