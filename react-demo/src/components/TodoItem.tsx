@@ -2,7 +2,7 @@ import { useState } from "react"
 import { observer } from "mobx-react-lite"
 import todoStore from "../store/todoStore"
 import type { Todo } from "../types/todo"
-import { List, Button, Checkbox, Modal, Input, Popconfirm, Form } from "antd"
+import {Select, Space, Tag, List, Button, Checkbox, Modal, Input, Popconfirm, Form } from "antd"
 
 
 type Props = {
@@ -19,7 +19,9 @@ function TodoItem({ todo }: Props) {
   // 编辑任务的 Modal 打开，初始化表单字段值为当前任务的文本
   const handleEdit = () => { 
     form.setFieldsValue({
-      text: todo.text
+      text: todo.text,
+      priority: todo.priority
+      
     })
     setIsModalOpen(true)
   }
@@ -31,7 +33,7 @@ function TodoItem({ todo }: Props) {
     try {
       const values = await form.validateFields()// validateFields()方法会返回一个Promise对象
 
-      todoStore.editTodo(todo.id, values.text)
+      todoStore.editTodo(todo.id, values.text, values.priority)
 
       setIsModalOpen(false)
     } catch {
@@ -65,14 +67,16 @@ function TodoItem({ todo }: Props) {
           checked={todo.done}
           onChange={() => todoStore.toggleTodo(todo.id)}
         >
-          <span
-            style={{
-              textDecoration: todo.done ? "line-through" : "none"
-            }}
-          >
-            {todo.text}
-          </span>
+          <Space>
+            <Tag color={todo.priority === "high" ? "red" : todo.priority === "medium" ? "orange" : "green"}>
+              {todo.priority === "high" ? "高" : todo.priority === "medium" ? "中" : "低"}
+            </Tag>
+            <span style={{ textDecoration: todo.done ? "line-through" : "none" }}>
+              {todo.text}
+            </span>
+          </Space>
         </Checkbox>
+
       </List.Item>
 
       
@@ -96,6 +100,16 @@ function TodoItem({ todo }: Props) {
             <Input placeholder="请输入任务内容" />
           </Form.Item>
           
+          <Form.Item name="priority" label="优先级">
+            <Select
+              options={[
+                { value: "high", label: "高" },
+                { value: "medium", label: "中" },
+                { value: "low", label: "低" },
+              ]}
+            />
+          </Form.Item>
+
         </Form>
       </Modal>
     </>

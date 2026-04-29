@@ -6,24 +6,30 @@ const router = express.Router()
 // 获取列表
 router.get("/", async (req, res) => {
   const db = await dbPromise
-  const rows = await db.all("SELECT * FROM todos")
+  const rows = await db.all(`select * from todos order by
+    case priority
+    when 'high' then 1
+    when 'medium' then 2
+    when 'low' then 3
+    end, id`)
   res.json(rows)
 })
 
 // 添加
 router.post("/", async (req, res) => {
-  const { text } = req.body
+  const { text, priority = "medium" } = req.body
   const db = await dbPromise
-  
+
   const result = await db.run(
-    "INSERT INTO todos (text) VALUES (?)",
-    [text]
+    "insert into todos (text, priority) VALUES (?,?)",
+    [text, priority]
   )
-  
+
   // SQLite 中获取最后插入的ID：result.lastID
   res.json({
     id: result.lastID,
     text,
+    priority,
     done: 0
   })
 })
@@ -40,10 +46,10 @@ router.delete("/:id", async (req, res) => {
 // 编辑
 router.put("/:id", async (req, res) => {
   const { id } = req.params
-  const { text } = req.body
+  const { text, priority } = req.body
   const db = await dbPromise
   
-  await db.run("UPDATE todos SET text = ? WHERE id = ?", [text, id])
+  await db.run("UPDATE todos SET text = ?, priority = ? WHERE id = ?", [text, priority, id])
   res.json({ success: true })
 })
 

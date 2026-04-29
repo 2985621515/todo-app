@@ -1,5 +1,5 @@
 import request from "./request"
-import type { Todo } from "../types/todo"
+import type { Todo, Priority } from "../types/todo"
 
 // 获取列表
 export const getTodos = () => {
@@ -7,8 +7,8 @@ export const getTodos = () => {
 }
 
 // 添加
-export const addTodoApi = (text: string) => {
-  return request.post<Todo>("/todos", { text })
+export const addTodoApi = (text: string, priority: Priority = 'medium') => {
+  return request.post<Todo>("/todos", { text, priority })
   //这里的{text}是一个json对象
   // {text}等价于{text : text} => {text:"传入的string数据"}，ES6语法糖
 }
@@ -19,8 +19,8 @@ export const deleteTodoApi = (id: number) => {
 }
 
 // 修改
-export const editTodoApi = (id: number, text: string) => {
-  return request.put(`/todos/${id}`, { text })
+export const editTodoApi = (id: number, text: string, priority: Priority) => {
+  return request.put(`/todos/${id}`, { text, priority })
 }
 
 // 切换状态

@@ -12,10 +12,11 @@ const dbPromise = open({
 async function initDB() {
   const db = await dbPromise
   await db.exec(`
-    CREATE TABLE IF NOT EXISTS todos (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      text TEXT NOT NULL,
-      done INTEGER NOT NULL DEFAULT 0
+    create table if not exists todos (
+      id integer primary key autoincrement,
+      text text not null,
+      done integer not null default 0,
+      priority text not null default 'medium'
     )
   `)
 }

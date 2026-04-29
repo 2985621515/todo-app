@@ -36,6 +36,9 @@ function createWindow() {
     minHeight: 600,
     title: 'G-Todo',
     icon: path.join(__dirname, 'Todo.ico'), 
+    
+    // nodeIntegration: false, 禁用 Node.js 集成，防止前端代码访问 Node.js API
+    // contextIsolation: true, 启用上下文隔离，防止前端代码访问 Node.js 进程的全局对象
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true
