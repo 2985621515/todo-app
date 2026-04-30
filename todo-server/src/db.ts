@@ -21,7 +21,9 @@ async function initDB() {
   `)
 }
 
-initDB()
+initDB().catch(err => {
+  console.error("数据库初始化失败:", err)
+})
 
 export default dbPromise
 
