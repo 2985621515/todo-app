@@ -1,7 +1,7 @@
 import { observer } from "mobx-react-lite"
 import todoStore from "../store/todoStore"
 import TodoItem from "./TodoItem"
-import { List, Empty, Popconfirm, Button, Tabs } from "antd"
+import { List, Empty, Popconfirm, Button, Tabs, Spin } from "antd"
 import { useEffect } from "react"
 
 function TodoList() {
@@ -31,9 +31,15 @@ function TodoList() {
           <Button danger>清空任务</Button>
         </Popconfirm>
       </div>
-      {todoStore.filteredList.length === 0 ? (
+     {todoStore.loading ? (
+        <div style={{ textAlign: 'center', padding: '40px 0' }}>
+          <Spin size="large" />
+          <p style={{ marginTop: 12, color: '#999' }}>正在连接服务...</p>
+        </div>
+      ) : todoStore.filteredList.length === 0 ? (
         <Empty description="暂无任务" />
       ) : (
+
         <List
           bordered
           dataSource={todoStore.filteredList}

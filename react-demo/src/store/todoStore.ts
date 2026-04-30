@@ -13,6 +13,7 @@ import {
 // 任务状态管理:创建一个TodoStore类,用于管理任务列表
 class TodoStore {
   list: Todo[] = []// 任务列表：全局状态
+  loading = true
   filter: "all" | "active" | "completed" = "all"
 
   get filteredList() {
@@ -29,14 +30,19 @@ class TodoStore {
   // ==============================================
   // 初始化（从后端获取）
   // ==============================================
-  async fetchTodos() {// 从后端获取任务列表
-    try {
-      const res = await getTodos() //getTodos()返回的是一个Promise
-      this.list = res.data
-    } catch (error) {
-      console.error("获取任务失败", error)
-    }
+  async fetchTodos() {
+  this.loading = true
+  try {
+    const res = await getTodos()
+    this.list = res.data
+    this.loading = false
+  } catch (error) {
+    console.error("获取任务失败，1秒后重试", error)
+    setTimeout(() => this.fetchTodos(), 1000)
+    // 不设置 loading=false，保持加载状态
   }
+}
+
 
   // ==============================================
   // 添加

@@ -1,5 +1,6 @@
 const { app, BrowserWindow } = require('electron')
 const path = require('path')
+const fs = require('fs')
 
 // 设置环境变量，告诉后端是被 Electron 启动的（不要自己调用 app.listen）
 process.env.ELECTRON_RUN = 'true'
@@ -8,25 +9,53 @@ process.env.ELECTRON_RUN = 'true'
 const dbPath = path.join(app.getPath('userData'), 'database.sqlite')
 process.env.DB_PATH = dbPath
 
+// 指定可写的缓存目录，消除 "Unable to create cache" 警告并加速渲染进程启动
+app.setPath('cache', path.join(app.getPath('userData'), 'Cache'))
+
 // 启动后端服务器，然后创建窗口
-app.whenReady().then(async () => {
-  try {
-    // 导入编译后的后端代码
-    // __dirname 指向 main.js 所在的目录（打包后就是这个目录）
-    const serverDir = path.join(__dirname, 'todo-server', 'dist')
-    const { startServer } = require(path.join(serverDir, 'index.js'))
+app.whenReady().then(() => {
+  // 先创建窗口，让用户立即看到界面
+  const win = createWindow()
 
-    // 等待服务器就绪
-    await startServer(3000)
+  // 延迟加载后端服务（不阻塞窗口显示）
+  setImmediate(async () => {
+    try {
+      const devServerDir = path.join(__dirname, '..', 'todo-server', 'dist')
+      const prodServerDir = path.join(__dirname, 'todo-server', 'dist')
+      const serverDir = fs.existsSync(devServerDir) ? devServerDir : prodServerDir
 
-    // 服务器启动完毕，创建窗口
-    createWindow()
-  } catch (err) {
-    // 如果有错误，弹出对话框显示，而不是悄无声息地崩溃
-    const { dialog } = require('electron')
-    dialog.showErrorBox('启动失败', err.message + '\n\n' + err.stack)
-  }
+      // 打包后优先加载 bundle.js（esbuild 打包，减少 require 解析开销）
+      const serverEntry = fs.existsSync(path.join(serverDir, 'bundle.js'))
+        ? path.join(serverDir, 'bundle.js')
+        : path.join(serverDir, 'index.js')
+
+      // 开发模式：让原生模块使用 electron/node_modules（已为 Electron 编译）
+      if (devServerDir === serverDir) {
+        const Module = require('module')
+        const electronModulesDir = path.join(__dirname, 'node_modules')
+        const origResolveFilename = Module._resolveFilename
+        Module._resolveFilename = function(request, parent, ...args) {
+          if ((request === 'sqlite3' || request === 'sqlite') &&
+              parent && parent.filename && parent.filename.startsWith(serverDir)) {
+            const electronPath = path.join(electronModulesDir, request)
+            if (fs.existsSync(electronPath)) {
+              return origResolveFilename.call(this, electronPath, parent, ...args)
+            }
+          }
+          return origResolveFilename.call(this, request, parent, ...args)
+        }
+      }
+
+      const { startServer } = require(serverEntry)
+      await startServer(3000)
+    } catch (err) {
+      console.error('启动失败:', err)
+      const { dialog } = require('electron')
+      dialog.showErrorBox('启动失败', err.message + '\n\n' + err.stack)
+    }
+  })
 })
+
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -35,21 +64,21 @@ function createWindow() {
     minWidth: 800,
     minHeight: 600,
     title: 'G-Todo',
-    icon: path.join(__dirname, 'Todo.ico'), 
-    
-    // nodeIntegration: false, 禁用 Node.js 集成，防止前端代码访问 Node.js API
-    // contextIsolation: true, 启用上下文隔离，防止前端代码访问 Node.js 进程的全局对象
+    icon: path.join(__dirname, 'Todo.ico'),
+
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true
     }
   })
 
-  // 隐藏菜单栏
   win.setMenuBarVisibility(false)
 
-  // 直接加载前端页面文件
-  win.loadFile(path.join(__dirname, 'react-demo', 'dist', 'index.html'))
+  // 兼容开发环境（react-demo 是同级目录）和打包后（被复制到 electron 内）
+  const devPath = path.join(__dirname, '..', 'react-demo', 'dist', 'index.html')
+  const prodPath = path.join(__dirname, 'react-demo', 'dist', 'index.html')
+  const htmlPath = fs.existsSync(devPath) ? devPath : prodPath
+  win.loadFile(htmlPath)
 }
 
 // 所有窗口关闭时退出应用

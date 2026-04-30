@@ -6,6 +6,7 @@
   "scripts": {
     "build": "electron-builder build",
     "postinstall": "electron-builder install-app-deps"
+    
   },
   "dependencies": {
     "express": "^5.2.1",
@@ -26,6 +27,7 @@
     "icon": "Todo.ico",
        "files": [
       "main.js",
+      "Todo.ico",
       {
         "from": "../todo-server/dist",
         "to": "todo-server/dist",
@@ -42,6 +44,6 @@
       "signAndEditExecutable": false,
       "artifactName": "${productName}.${ext}"
     },
-    "asar": false
+    "asar": true
   }
 }
