@@ -1,29 +1,37 @@
 import { useState } from "react"
 import { observer } from "mobx-react-lite"
 import todoStore from "../store/todoStore"
-import {Input, Button, Space, Select} from "antd"
+import { Input, Button, Space, Select, DatePicker } from "antd"
 import type { Priority } from "../types/todo"
+import dayjs from "dayjs"
 
 function TodoInput() {
-  const [text, setText] = useState("")// 临时存储用户输入的任务文本
-  const [priority, setPriority] = useState<Priority>('medium')// 临时存储用户选择的优先级
+  const [text, setText] = useState("")
+  const [priority, setPriority] = useState<Priority>('medium')
+  const [dueDate, setDueDate] = useState<string | null>(null)
 
   const handleAdd = () => {
-    todoStore.addTodo(text, priority)// 调用todoStore的addTodo方法添加新任务
-    setText("")// 清空输入框
+    todoStore.addTodo(text, priority, dueDate)
+    setText("")
+    setDueDate(null)
   }
 
   return (
     <Space style={{ marginBottom: 16 }}>
       <Input
         value={text}
-        // onChange 事件处理函数，用于更新输入框的值
-        // 当用户输入内容时，更新text状态变量
-        // e.target.value：获取输入框当前的文本值
-        // e.target：事件触发的元素，这里指输入框
         onChange={(e) => setText(e.target.value)}
         placeholder="请输入任务"
-        onPressEnter={handleAdd}// 按下Enter键时触发添加任务
+        onPressEnter={handleAdd}
+      />
+
+      <DatePicker
+        showTime={{ format: 'HH:mm' }}
+        value={dueDate ? dayjs(dueDate) : null}
+        onChange={(d) => setDueDate(d ? d.format('YYYY-MM-DD HH:mm') : null)}
+        placeholder="截止时间"
+        style={{ width: 180 }}
+        allowClear
       />
 
       <Select
@@ -56,14 +64,11 @@ function TodoInput() {
         )}
       />
 
-
-
       <Button type="primary" onClick={handleAdd}>
         添加
       </Button>
     </Space>
   )
 }
-
 
 export default observer(TodoInput)

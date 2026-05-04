@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog, Notification } = require('electron')
 const path = require('path')
 const fs = require('fs')
 const crypto = require('crypto')
@@ -6,6 +6,9 @@ const crypto = require('crypto')
 // 数据库路径
 const dbPath = path.join(app.getPath('userData'), 'database.sqlite')
 app.setPath('cache', path.join(app.getPath('userData'), 'Cache'))
+
+// Windows 通知必须设置，否则弹窗被系统吞掉
+app.setAppUserModelId('com.todo.app')
 
 // ==============================================
 // 密码工具
@@ -73,6 +76,9 @@ async function initDB() {
   if (!todoCols.some(col => col.name === 'user_id')) {
     await db.exec('ALTER TABLE todos ADD COLUMN user_id INTEGER REFERENCES users(id)')
   }
+  if (!todoCols.some(col => col.name === 'due_date')) {
+    await db.exec('ALTER TABLE todos ADD COLUMN due_date TEXT DEFAULT NULL')
+  }
 
   // 迁移：users 表补 nickname / avatar_color / avatar 列
   const userCols = await db.all("PRAGMA table_info(users)")
@@ -131,6 +137,9 @@ registerIPC()
 
 app.whenReady().then(() => {
   createWindow()
+  // 启动 3 秒后检查一次 + 每分钟轮询
+  setTimeout(checkReminders, 3000)
+  setInterval(checkReminders, 60_000)
 })
 
 // ==============================================
@@ -266,14 +275,14 @@ function registerIPC() {
       END, id`, [currentUserId])
   })
 
-  ipcMain.handle('todos:add', async (_event, text, priority = 'medium') => {
+  ipcMain.handle('todos:add', async (_event, text, priority = 'medium', dueDate = null) => {
     await dbReady
     if (!currentUserId) return { error: '未登录' }
     const result = await db.run(
-      'INSERT INTO todos (text, priority, user_id) VALUES (?, ?, ?)',
-      [text, priority, currentUserId]
+      'INSERT INTO todos (text, priority, due_date, user_id) VALUES (?, ?, ?, ?)',
+      [text, priority, dueDate, currentUserId]
     )
-    return { id: result.lastID, text, priority, done: 0 }
+    return { id: result.lastID, text, priority, done: 0, due_date: dueDate }
   })
 
   ipcMain.handle('todos:delete', async (_event, id) => {
@@ -283,11 +292,11 @@ function registerIPC() {
     return { success: true }
   })
 
-  ipcMain.handle('todos:edit', async (_event, id, text, priority) => {
+  ipcMain.handle('todos:edit', async (_event, id, text, priority, dueDate) => {
     await dbReady
     if (!currentUserId) return { error: '未登录' }
-    await db.run('UPDATE todos SET text = ?, priority = ? WHERE id = ? AND user_id = ?',
-      [text, priority, id, currentUserId])
+    await db.run('UPDATE todos SET text = ?, priority = ?, due_date = ? WHERE id = ? AND user_id = ?',
+      [text, priority, dueDate ?? null, id, currentUserId])
     return { success: true }
   })
 
@@ -314,7 +323,7 @@ function registerIPC() {
     if (!currentUserId) return { error: '未登录' }
 
     const todos = await db.all(
-      'SELECT id, text, done, priority FROM todos WHERE user_id = ? ORDER BY id',
+      'SELECT id, text, done, priority, due_date FROM todos WHERE user_id = ? ORDER BY id',
       [currentUserId]
     )
 
@@ -334,14 +343,59 @@ function registerIPC() {
     if (format === 'json') {
       content = JSON.stringify(todos, null, 2)
     } else {
-      const header = 'id,text,done,priority'
-      const rows = todos.map(t => `${t.id},"${t.text}",${t.done},${t.priority}`)
+      const header = 'id,text,done,priority,due_date'
+      const rows = todos.map(t => `${t.id},"${t.text}",${t.done},${t.priority},${t.due_date || ''}`)
       content = '﻿' + header + '\n' + rows.join('\n')
     }
 
     fs.writeFileSync(filePath, content, 'utf-8')
     return { success: true }
   })
+}
+
+// ==============================================
+// 桌面提醒（逾期 + 即将到期）
+// ==============================================
+async function checkReminders() {
+  if (!currentUserId) return
+  await dbReady
+
+  // 逾期未完成的任务（到期时间 < 现在）
+  const overdue = await db.all(
+    `SELECT text, due_date FROM todos
+     WHERE user_id = ? AND done = 0
+     AND due_date IS NOT NULL
+     AND datetime(due_date) < datetime('now', 'localtime')`,
+    [currentUserId]
+  )
+
+  // 5 分钟内到期的任务（到期时间 在 现在 ~ 现在+5分钟 之间）
+  const soon = await db.all(
+    `SELECT text, due_date FROM todos
+     WHERE user_id = ? AND done = 0
+     AND due_date IS NOT NULL
+     AND datetime(due_date) >= datetime('now', 'localtime')
+     AND datetime(due_date) <= datetime('now', 'localtime', '+5 minutes')`,
+    [currentUserId]
+  )
+
+  if (overdue.length > 0) {
+    const names = overdue.slice(0, 3).map(t => t.text).join('、')
+    const more = overdue.length > 3 ? `等${overdue.length}项` : ''
+    new Notification({
+      title: '逾期任务',
+      body: `${names}${more}已逾期，请及时处理`,
+      urgency: 'critical'
+    }).show()
+    }
+
+  for (const t of soon) {
+    new Notification({
+      title: '任务即将到期',
+      body: t.text,
+      urgency: 'normal'
+    }).show()
+  }
 }
 
 app.on('window-all-closed', () => {

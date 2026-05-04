@@ -14,11 +14,19 @@ class TodoStore {
   list: Todo[] = []
   loading = true
   filter: "all" | "active" | "completed" = "all"
+  searchKeyword = ""
 
   get filteredList() {
-    if (this.filter === "active") return this.list.filter(item => !item.done)
-    if (this.filter === "completed") return this.list.filter(item => item.done)
-    return this.list
+    let result
+    if (this.filter === "active") result = this.list.filter(item => !item.done)
+    else if (this.filter === "completed") result = this.list.filter(item => item.done)
+    else result = this.list
+
+    if (this.searchKeyword.trim()) {
+      const kw = this.searchKeyword.trim().toLowerCase()
+      result = result.filter(item => item.text.toLowerCase().includes(kw))
+    }
+    return result
   }
 
   constructor() {
@@ -45,11 +53,11 @@ class TodoStore {
   // ==============================================
   // 添加
   // ==============================================
-  async addTodo(text: string, priority: Priority = 'medium') {
+  async addTodo(text: string, priority: Priority = 'medium', dueDate?: string | null) {
     if (!text.trim()) return
 
     try {
-      const res = await addTodoApi(text, priority)
+      const res = await addTodoApi(text, priority, dueDate ?? null)
       if (res && !('error' in res)) {
         this.list.push(res)
       }
@@ -88,15 +96,16 @@ class TodoStore {
   // ==============================================
   // 编辑
   // ==============================================
-  async editTodo(id: number, text: string, priority: Priority) {
+  async editTodo(id: number, text: string, priority: Priority, dueDate?: string | null) {
     if (!text.trim()) return
 
     try {
-      await editTodoApi(id, text, priority)
+      await editTodoApi(id, text, priority, dueDate ?? null)
       const todo = this.list.find(item => item.id === id)
       if (todo) {
         todo.text = text
         todo.priority = priority
+        todo.due_date = dueDate ?? null
       }
     } catch (error) {
       console.error("编辑失败", error)
@@ -119,11 +128,16 @@ class TodoStore {
     this.filter = filter
   }
 
+  setSearch(keyword: string) {
+    this.searchKeyword = keyword
+  }
+
   // 用户登出时清空列表
   reset() {
     this.list = []
     this.loading = true
     this.filter = "all"
+    this.searchKeyword = ""
   }
 }
 

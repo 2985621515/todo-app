@@ -3,6 +3,7 @@ export interface Todo {
   text: string
   done: boolean
   priority: "high" | "medium" | "low"
+  due_date: string | null
 }
 
 export type Priority = 'high' | 'medium' | 'low'

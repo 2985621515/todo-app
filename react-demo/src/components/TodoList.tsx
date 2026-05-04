@@ -1,7 +1,7 @@
 import { observer } from "mobx-react-lite"
 import todoStore from "../store/todoStore"
 import TodoItem from "./TodoItem"
-import { List, Empty, Popconfirm, Button, Tabs, Spin } from "antd"
+import { List, Empty, Popconfirm, Button, Tabs, Spin, Input } from "antd"
 import { useEffect } from "react"
 
 function TodoList() {
@@ -12,6 +12,14 @@ function TodoList() {
 
   return (
     <>
+      <Input.Search
+        placeholder="搜索任务..."
+        allowClear
+        value={todoStore.searchKeyword}
+        onChange={(e) => todoStore.setSearch(e.target.value)}
+        onSearch={(value) => todoStore.setSearch(value)}
+        style={{ marginBottom: 16 }}
+      />
       <Tabs
         activeKey={todoStore.filter}
         onChange={(key) => todoStore.setFilter(key as "all" | "active" | "completed")}

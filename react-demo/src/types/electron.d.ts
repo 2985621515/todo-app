@@ -12,9 +12,9 @@ interface ElectronAPI {
 
   // Todo
   getTodos: () => Promise<Todo[]>
-  addTodo: (text: string, priority: Priority) => Promise<Todo>
+  addTodo: (text: string, priority: Priority, dueDate?: string | null) => Promise<Todo>
   deleteTodo: (id: number) => Promise<{ success: boolean }>
-  editTodo: (id: number, text: string, priority: Priority) => Promise<{ success: boolean }>
+  editTodo: (id: number, text: string, priority: Priority, dueDate?: string | null) => Promise<{ success: boolean }>
   toggleTodo: (id: number) => Promise<{ success: boolean }>
   clearTodos: () => Promise<{ success: boolean }>
 

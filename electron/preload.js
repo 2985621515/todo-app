@@ -12,9 +12,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Todo
   getTodos: () => ipcRenderer.invoke('todos:list'),
-  addTodo: (text, priority) => ipcRenderer.invoke('todos:add', text, priority),
+  addTodo: (text, priority, dueDate) => ipcRenderer.invoke('todos:add', text, priority, dueDate),
   deleteTodo: (id) => ipcRenderer.invoke('todos:delete', id),
-  editTodo: (id, text, priority) => ipcRenderer.invoke('todos:edit', id, text, priority),
+  editTodo: (id, text, priority, dueDate) => ipcRenderer.invoke('todos:edit', id, text, priority, dueDate),
   toggleTodo: (id) => ipcRenderer.invoke('todos:toggle', id),
   clearTodos: () => ipcRenderer.invoke('todos:clear'),
 

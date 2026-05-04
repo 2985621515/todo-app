@@ -34,16 +34,16 @@ export const getTodos = () => {
   return window.electronAPI.getTodos()
 }
 
-export const addTodoApi = (text: string, priority: Priority = 'medium') => {
-  return window.electronAPI.addTodo(text, priority)
+export const addTodoApi = (text: string, priority: Priority = 'medium', dueDate?: string | null) => {
+  return window.electronAPI.addTodo(text, priority, dueDate ?? null)
 }
 
 export const deleteTodoApi = (id: number) => {
   return window.electronAPI.deleteTodo(id)
 }
 
-export const editTodoApi = (id: number, text: string, priority: Priority) => {
-  return window.electronAPI.editTodo(id, text, priority)
+export const editTodoApi = (id: number, text: string, priority: Priority, dueDate?: string | null) => {
+  return window.electronAPI.editTodo(id, text, priority, dueDate ?? null)
 }
 
 export const toggleTodoApi = (id: number) => {
