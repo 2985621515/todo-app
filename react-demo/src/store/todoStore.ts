@@ -8,7 +8,7 @@ import {
   editTodoApi,
   toggleTodoApi,
   clearTodosApi
-} from "../api/todo"
+} from "../api/electron"
 
 // 任务状态管理:创建一个TodoStore类,用于管理任务列表
 class TodoStore {
@@ -34,7 +34,7 @@ class TodoStore {
   this.loading = true
   try {
     const res = await getTodos()
-    this.list = res.data
+    this.list = res
     this.loading = false
   } catch (error) {
     console.error("获取任务失败，1秒后重试", error)
@@ -52,7 +52,7 @@ class TodoStore {
 
     try {
       const res = await addTodoApi(text, priority)
-      this.list.push(res.data)
+      this.list.push(res)
     } catch (error) {
       console.error("添加失败", error)
     }

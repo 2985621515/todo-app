@@ -9,8 +9,6 @@
     
   },
   "dependencies": {
-    "express": "^5.2.1",
-    "cors": "^2.8.6",
     "sqlite3": "^6.0.1",
     "sqlite": "^5.1.1"
   },
@@ -27,12 +25,8 @@
     "icon": "Todo.ico",
        "files": [
       "main.js",
+      "preload.js",
       "Todo.ico",
-      {
-        "from": "../todo-server/dist",
-        "to": "todo-server/dist",
-        "filter": ["**/*"]
-      },
       {
         "from": "../react-demo/dist",
         "to": "react-demo/dist",
