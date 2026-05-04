@@ -10,19 +10,17 @@ import {
   clearTodosApi
 } from "../api/electron"
 
-// 任务状态管理:创建一个TodoStore类,用于管理任务列表
 class TodoStore {
-  list: Todo[] = []// 任务列表：全局状态
+  list: Todo[] = []
   loading = true
   filter: "all" | "active" | "completed" = "all"
 
   get filteredList() {
-  if (this.filter === "active") return this.list.filter(item => !item.done)
-  if (this.filter === "completed") return this.list.filter(item => item.done)
-  return this.list
-}
+    if (this.filter === "active") return this.list.filter(item => !item.done)
+    if (this.filter === "completed") return this.list.filter(item => item.done)
+    return this.list
+  }
 
-  // 构造函数：初始化状态
   constructor() {
     makeAutoObservable(this)
   }
@@ -31,18 +29,18 @@ class TodoStore {
   // 初始化（从后端获取）
   // ==============================================
   async fetchTodos() {
-  this.loading = true
-  try {
-    const res = await getTodos()
-    this.list = res
-    this.loading = false
-  } catch (error) {
-    console.error("获取任务失败，1秒后重试", error)
-    setTimeout(() => this.fetchTodos(), 1000)
-    // 不设置 loading=false，保持加载状态
+    this.loading = true
+    try {
+      const res = await getTodos()
+      if (Array.isArray(res)) {
+        this.list = res
+      }
+      this.loading = false
+    } catch (error) {
+      console.error("获取任务失败，1秒后重试", error)
+      setTimeout(() => this.fetchTodos(), 1000)
+    }
   }
-}
-
 
   // ==============================================
   // 添加
@@ -52,7 +50,9 @@ class TodoStore {
 
     try {
       const res = await addTodoApi(text, priority)
-      this.list.push(res)
+      if (res && !('error' in res)) {
+        this.list.push(res)
+      }
     } catch (error) {
       console.error("添加失败", error)
     }
@@ -76,7 +76,6 @@ class TodoStore {
   async toggleTodo(id: number) {
     try {
       await toggleTodoApi(id)
-
       const todo = this.list.find(item => item.id === id)
       if (todo) {
         todo.done = !todo.done
@@ -94,7 +93,6 @@ class TodoStore {
 
     try {
       await editTodoApi(id, text, priority)
-
       const todo = this.list.find(item => item.id === id)
       if (todo) {
         todo.text = text
@@ -106,7 +104,7 @@ class TodoStore {
   }
 
   // ==============================================
-  //清空
+  // 清空
   // ==============================================
   async clearTodos() {
     try {
@@ -118,11 +116,16 @@ class TodoStore {
   }
 
   setFilter(filter: "all" | "active" | "completed") {
-  this.filter = filter
-}
+    this.filter = filter
+  }
 
+  // 用户登出时清空列表
+  reset() {
+    this.list = []
+    this.loading = true
+    this.filter = "all"
+  }
 }
-
 
 const todoStore = new TodoStore()
 export default todoStore
